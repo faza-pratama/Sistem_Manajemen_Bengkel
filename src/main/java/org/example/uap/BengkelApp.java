@@ -10,6 +10,9 @@ public class BengkelApp extends JFrame {
     protected CardLayout cardLayout;
     protected DefaultTableModel tableModel; // Global untuk Data Kendaraan
 
+    private DefaultTableModel tableModelServis;
+    private JTable tableServis;
+
     public BengkelApp() {
         setTitle("Bengkel Pro Manager v1.0");
         setSize(900, 600);
@@ -40,6 +43,9 @@ public class BengkelApp extends JFrame {
         contentPanel = new JPanel(cardLayout);
         add(contentPanel, BorderLayout.CENTER);
         contentPanel.add(createDashboardPage(), "PAGE_DASHBOARD");
+
+        contentPanel.add(createServisPage(), "PAGE_SERVIS");
+        btnServis.addActionListener(e -> cardLayout.show(contentPanel, "PAGE_SERVIS"));
 
         // Event Navigasi
         btnHome.addActionListener(e -> cardLayout.show(contentPanel, "PAGE_DASHBOARD"));
@@ -96,6 +102,75 @@ public class BengkelApp extends JFrame {
         card.add(lblT); card.add(lblV);
         return card;
     }
+    private JPanel createServisPage() {
+        JPanel panel = new JPanel(new BorderLayout(15, 15));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBackground(new Color(240, 240, 240));
+
+        JLabel lblTitle = new JLabel("Form Manajemen Servis");
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 20));
+        panel.add(lblTitle, BorderLayout.NORTH);
+
+        // FORM INPUT (KIRI)
+        JPanel formPanel = new JPanel(new GridLayout(10, 1, 5, 5));
+        formPanel.setPreferredSize(new Dimension(250, 0));
+
+        JTextField txtPlatServis = new JTextField();
+        JTextField txtKeluhan = new JTextField();
+        JTextField txtBiaya = new JTextField();
+        String[] statusOptions = {"Antri", "Proses", "Selesai"};
+        JComboBox<String> cbStatus = new JComboBox<>(statusOptions);
+
+        formPanel.add(new JLabel("Plat Nomor Kendaraan:"));
+        formPanel.add(txtPlatServis);
+        formPanel.add(new JLabel("Keluhan:"));
+        formPanel.add(txtKeluhan);
+        formPanel.add(new JLabel("Biaya Servis (Rp):"));
+        formPanel.add(txtBiaya);
+        formPanel.add(new JLabel("Status:"));
+        formPanel.add(cbStatus);
+
+        JButton btnSimpanServis = new JButton("Simpan Transaksi");
+        btnSimpanServis.setBackground(new Color(52, 152, 219));
+        btnSimpanServis.setForeground(Color.WHITE);
+        formPanel.add(new JLabel(""));
+        formPanel.add(btnSimpanServis);
+        panel.add(formPanel, BorderLayout.WEST);
+
+        // LOGIKA TOMBOL (Exception Handling & File Handling)
+        btnSimpanServis.addActionListener(e -> {
+            try {
+                String plat = txtPlatServis.getText().trim();
+                String keluhan = txtKeluhan.getText().trim();
+                String status = cbStatus.getSelectedItem().toString();
+
+                // Validasi Angka: Memicu NumberFormatException jika input bukan angka
+                double biaya = Double.parseDouble(txtBiaya.getText().trim());
+
+                if (plat.isEmpty() || keluhan.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Mohon lengkapi data!");
+                    return;
+                }
+
+                tableModelServis.addRow(new Object[]{plat, keluhan, biaya, status});
+                simpanServisKeFile(plat, keluhan, String.valueOf(biaya), status); // Persistensi
+
+                // Reset Form
+                txtPlatServis.setText(""); txtKeluhan.setText(""); txtBiaya.setText("");
+                JOptionPane.showMessageDialog(this, "Data Servis Berhasil Dicatat!");
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Biaya harus berupa angka!", "Error Input", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        // TABEL SERVIS
+        String[] cols = {"Plat", "Keluhan", "Biaya", "Status"};
+        tableModelServis = new DefaultTableModel(cols, 0);
+        tableServis = new JTable(tableModelServis);
+        panel.add(new JScrollPane(tableServis), BorderLayout.CENTER);
+
+        return panel;
+    }
     private void simpanKeFile(String plat, String pemilik) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("kendaraan.txt", true))) {
             writer.write(plat + "," + pemilik);
@@ -118,6 +193,14 @@ public class BengkelApp extends JFrame {
             }
         } catch (IOException e) {
             System.out.println("Gagal memuat data: " + e.getMessage());
+        }
+    }
+    private void simpanServisKeFile(String plat, String keluhan, String biaya, String status) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("servis.txt", true))) {
+            writer.write(plat + "," + keluhan + "," + biaya + "," + status);
+            writer.newLine();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
     public static void main(String[] args) {
