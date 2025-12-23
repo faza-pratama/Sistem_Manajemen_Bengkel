@@ -44,6 +44,27 @@ public class BengkelApp extends JFrame {
         // Event Navigasi
         btnHome.addActionListener(e -> cardLayout.show(contentPanel, "PAGE_DASHBOARD"));
         btnMobil.addActionListener(e -> cardLayout.show(contentPanel, "PAGE_KENDARAAN"));
+        btnTambah.addActionListener(e -> {
+            String plat = txtPlat.getText().trim();
+            String pemilik = txtPemilik.getText().trim();
+
+            // Exception Handling: Validasi input kosong
+            if (plat.isEmpty() || pemilik.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Input tidak boleh kosong!", "Peringatan", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Tambah ke Tabel (Read/Update secara visual)
+            tableModel.addRow(new Object[]{plat, pemilik});
+
+            // Simpan ke File (Persistensi Data)
+            simpanKeFile(plat, pemilik);
+
+            // Reset Form
+            txtPlat.setText("");
+            txtPemilik.setText("");
+            JOptionPane.showMessageDialog(this, "Data Berhasil Disimpan!");
+        });
     }
 
     private JPanel createDashboardPage() {
@@ -75,7 +96,30 @@ public class BengkelApp extends JFrame {
         card.add(lblT); card.add(lblV);
         return card;
     }
+    private void simpanKeFile(String plat, String pemilik) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("kendaraan.txt", true))) {
+            writer.write(plat + "," + pemilik);
+            writer.newLine();
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Gagal menyimpan ke file: " + e.getMessage());
+        }
+    }
+    private void loadDataKendaraan() {
+        File file = new File("kendaraan.txt");
+        if (!file.exists()) return;
 
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split(",");
+                if (data.length == 2) {
+                    tableModel.addRow(data);
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Gagal memuat data: " + e.getMessage());
+        }
+    }
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new BengkelApp().setVisible(true));
     }
