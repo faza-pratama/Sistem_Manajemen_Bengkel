@@ -6,6 +6,7 @@ import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class BengkelApp extends JFrame {
     protected JPanel contentPanel;
@@ -16,6 +17,10 @@ public class BengkelApp extends JFrame {
     private DefaultTableModel tableModelServis;
     private DefaultTableModel tableModelLaporan;
     private JTable tableLaporan;
+    private JTable tableKendaraan;
+
+    // Label Dashboard untuk update real-time
+    private JLabel lblTotalKendaraanValue;
 
     public BengkelApp() {
         setTitle("Bengkel Pro Manager v1.0");
@@ -53,19 +58,20 @@ public class BengkelApp extends JFrame {
 
         add(sidebar, BorderLayout.WEST);
 
-        // --- CONTENT AREA ---
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
         add(contentPanel, BorderLayout.CENTER);
 
-        // Inisialisasi Halaman
         contentPanel.add(createDashboardPage(), "PAGE_DASHBOARD");
         contentPanel.add(createKendaraanPage(), "PAGE_KENDARAAN");
         contentPanel.add(createServisPage(), "PAGE_SERVIS");
         contentPanel.add(createLaporanPage(), "PAGE_LAPORAN");
 
         // --- EVENT NAVIGASI ---
-        btnHome.addActionListener(e -> cardLayout.show(contentPanel, "PAGE_DASHBOARD"));
+        btnHome.addActionListener(e -> {
+            updateDashboardStats();
+            cardLayout.show(contentPanel, "PAGE_DASHBOARD");
+        });
         btnMobil.addActionListener(e -> {
             loadDataKendaraan();
             cardLayout.show(contentPanel, "PAGE_KENDARAAN");
@@ -77,6 +83,7 @@ public class BengkelApp extends JFrame {
         });
 
         loadDataKendaraan();
+        updateDashboardStats();
     }
 
     private JButton createMenuButton(String text) {
@@ -91,7 +98,6 @@ public class BengkelApp extends JFrame {
         return btn;
     }
 
-    // --- HALAMAN 1: DASHBOARD ---
     private JPanel createDashboardPage() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(new Color(245, 245, 245));
@@ -105,26 +111,26 @@ public class BengkelApp extends JFrame {
         statsPanel.setBackground(new Color(245, 245, 245));
         statsPanel.setBorder(BorderFactory.createEmptyBorder(0, 30, 30, 30));
 
-        statsPanel.add(createStatCard("Total Kendaraan", "Update on Refresh", new Color(41, 128, 185)));
-        statsPanel.add(createStatCard("Status Mekanik", "Tersedia", new Color(192, 57, 43)));
-        statsPanel.add(createStatCard("Sistem Database", "Terhubung", new Color(39, 174, 96)));
+        lblTotalKendaraanValue = new JLabel("0");
+        statsPanel.add(createStatCard("Total Kendaraan Terdaftar", lblTotalKendaraanValue, new Color(41, 128, 185)));
+        statsPanel.add(createStatCard("Status Mekanik", new JLabel("Tersedia"), new Color(192, 57, 43)));
+        statsPanel.add(createStatCard("Sistem Database", new JLabel("Terhubung"), new Color(39, 174, 96)));
 
         panel.add(statsPanel, BorderLayout.NORTH);
         return panel;
     }
 
-    private JPanel createStatCard(String title, String value, Color color) {
+    private JPanel createStatCard(String title, JLabel valueLabel, Color color) {
         JPanel card = new JPanel(new GridLayout(2, 1, 5, 5));
         card.setBackground(color);
         card.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         JLabel lblT = new JLabel(title); lblT.setForeground(Color.WHITE);
-        JLabel lblV = new JLabel(value); lblV.setForeground(Color.WHITE);
-        lblV.setFont(new Font("SansSerif", Font.BOLD, 18));
-        card.add(lblT); card.add(lblV);
+        valueLabel.setForeground(Color.WHITE);
+        valueLabel.setFont(new Font("SansSerif", Font.BOLD, 22));
+        card.add(lblT); card.add(valueLabel);
         return card;
     }
 
-    // --- HALAMAN 2: DATA KENDARAAN ---
     private JPanel createKendaraanPage() {
         JPanel panel = new JPanel(new BorderLayout(20, 20));
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
@@ -144,18 +150,23 @@ public class BengkelApp extends JFrame {
         btnTambah.setOpaque(true);
         btnTambah.setBorderPainted(false);
 
+        JButton btnDelete = new JButton("Hapus Data Terpilih");
+        btnDelete.setBackground(new Color(231, 76, 60));
+        btnDelete.setForeground(Color.WHITE);
+        btnDelete.setOpaque(true);
+        btnDelete.setBorderPainted(false);
+
         formPanel.add(new JLabel("Plat Nomor:"));
         formPanel.add(txtPlat);
         formPanel.add(new JLabel("Nama Pemilik:"));
         formPanel.add(txtPemilik);
-        formPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         formPanel.add(btnTambah);
+        formPanel.add(btnDelete);
         panel.add(formPanel, BorderLayout.WEST);
 
-        String[] cols = {"Plat Nomor", "Nama Pemilik"};
-        tableModelKendaraan = new DefaultTableModel(cols, 0);
-        JTable table = new JTable(tableModelKendaraan);
-        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        tableModelKendaraan = new DefaultTableModel(new String[]{"Plat Nomor", "Nama Pemilik"}, 0);
+        tableKendaraan = new JTable(tableModelKendaraan);
+        panel.add(new JScrollPane(tableKendaraan), BorderLayout.CENTER);
 
         btnTambah.addActionListener(e -> {
             String plat = txtPlat.getText().trim();
@@ -166,13 +177,14 @@ public class BengkelApp extends JFrame {
             tableModelKendaraan.addRow(new Object[]{plat, pemilik});
             simpanKeFile("kendaraan.txt", plat + "," + pemilik);
             txtPlat.setText(""); txtPemilik.setText("");
-            JOptionPane.showMessageDialog(this, "Berhasil Disimpan!");
+            updateDashboardStats();
         });
+
+        btnDelete.addActionListener(e -> deleteSelectedRow(tableKendaraan, tableModelKendaraan, "kendaraan.txt"));
 
         return panel;
     }
 
-    // --- HALAMAN 3: MANAJEMEN SERVIS ---
     private JPanel createServisPage() {
         JPanel panel = new JPanel(new BorderLayout(20, 20));
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
@@ -191,14 +203,12 @@ public class BengkelApp extends JFrame {
         JButton btnSimpan = new JButton("Catat Servis");
         btnSimpan.setBackground(new Color(0, 123, 255));
         btnSimpan.setForeground(Color.WHITE);
-        btnSimpan.setOpaque(true);
-        btnSimpan.setBorderPainted(false);
+        btnSimpan.setOpaque(true); btnSimpan.setBorderPainted(false);
 
         formPanel.add(new JLabel("Plat Nomor:")); formPanel.add(txtPlat);
         formPanel.add(new JLabel("Keluhan:")); formPanel.add(txtKeluhan);
         formPanel.add(new JLabel("Biaya (Angka):")); formPanel.add(txtBiaya);
         formPanel.add(new JLabel("Status:")); formPanel.add(cbStatus);
-        formPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         formPanel.add(btnSimpan);
         panel.add(formPanel, BorderLayout.WEST);
 
@@ -212,14 +222,13 @@ public class BengkelApp extends JFrame {
                 tableModelServis.addRow(data.split(","));
                 simpanKeFile("servis.txt", data);
                 JOptionPane.showMessageDialog(this, "Servis Dicatat!");
-                txtBiaya.setText(""); txtKeluhan.setText("");
+                txtBiaya.setText(""); txtPlat.setText(""); txtKeluhan.setText("");
             } catch (Exception ex) { JOptionPane.showMessageDialog(this, "Biaya harus angka!"); }
         });
 
         return panel;
     }
 
-    // --- HALAMAN 4: LAPORAN ---
     private JPanel createLaporanPage() {
         JPanel panel = new JPanel(new BorderLayout(20, 20));
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
@@ -239,12 +248,34 @@ public class BengkelApp extends JFrame {
         tableLaporan = new JTable(tableModelLaporan);
         panel.add(new JScrollPane(tableLaporan), BorderLayout.CENTER);
 
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton btnSort = new JButton("Urutkan Biaya Termahal");
-        btnSort.setBackground(new Color(108, 117, 125));
-        btnSort.setForeground(Color.WHITE);
-        btnSort.setOpaque(true);
-        btnSort.setBorderPainted(false);
-        panel.add(btnSort, BorderLayout.SOUTH);
+        btnSort.setBackground(new Color(108, 117, 125)); btnSort.setForeground(Color.WHITE);
+        btnSort.setOpaque(true); btnSort.setBorderPainted(false);
+
+        JButton btnDeleteLaporan = new JButton("Hapus Baris");
+        btnDeleteLaporan.setBackground(new Color(231, 76, 60)); btnDeleteLaporan.setForeground(Color.WHITE);
+        btnDeleteLaporan.setOpaque(true); btnDeleteLaporan.setBorderPainted(false);
+
+        bottomPanel.add(btnSort);
+        bottomPanel.add(btnDeleteLaporan);
+        panel.add(bottomPanel, BorderLayout.SOUTH);
+
+        // Logic Cari Plat
+        btnSearch.addActionListener(e -> {
+            String searchText = txtSearch.getText().toLowerCase().trim();
+            if (searchText.isEmpty()) return;
+            boolean found = false;
+            for (int i = 0; i < tableLaporan.getRowCount(); i++) {
+                if (tableLaporan.getValueAt(i, 0).toString().toLowerCase().contains(searchText)) {
+                    tableLaporan.setRowSelectionInterval(i, i);
+                    tableLaporan.scrollRectToVisible(tableLaporan.getCellRect(i, 0, true));
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) JOptionPane.showMessageDialog(this, "Plat tidak ditemukan!");
+        });
 
         btnSort.addActionListener(e -> {
             List<Object[]> rows = new ArrayList<>();
@@ -258,10 +289,47 @@ public class BengkelApp extends JFrame {
             for(Object[] r : rows) tableModelLaporan.addRow(r);
         });
 
+        btnDeleteLaporan.addActionListener(e -> deleteSelectedRow(tableLaporan, tableModelLaporan, "servis.txt"));
+
         return panel;
     }
 
-    // --- CORE LOGIC ---
+    // --- CORE LOGIC PERBAIKAN ---
+
+    private void updateDashboardStats() {
+        int count = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader("kendaraan.txt"))) {
+            while (br.readLine() != null) count++;
+        } catch (IOException e) { count = 0; }
+        if (lblTotalKendaraanValue != null) lblTotalKendaraanValue.setText(String.valueOf(count));
+    }
+
+    private void deleteSelectedRow(JTable table, DefaultTableModel model, String fileName) {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Pilih baris yang ingin dihapus!");
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Hapus data ini?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            model.removeRow(selectedRow);
+            // Update File
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(fileName))) {
+                for (int i = 0; i < model.getRowCount(); i++) {
+                    StringBuilder sb = new StringBuilder();
+                    for (int j = 0; j < model.getColumnCount(); j++) {
+                        sb.append(model.getValueAt(i, j));
+                        if (j < model.getColumnCount() - 1) sb.append(",");
+                    }
+                    bw.write(sb.toString());
+                    bw.newLine();
+                }
+            } catch (IOException e) { e.printStackTrace(); }
+            updateDashboardStats();
+        }
+    }
+
     private void simpanKeFile(String filename, String line) {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(filename, true))) {
             bw.write(line); bw.newLine();
@@ -277,6 +345,7 @@ public class BengkelApp extends JFrame {
     }
 
     private void loadDataLaporan() {
+        if (tableModelLaporan == null) return;
         tableModelLaporan.setRowCount(0);
         try (BufferedReader br = new BufferedReader(new FileReader("servis.txt"))) {
             String s; while((s = br.readLine()) != null) tableModelLaporan.addRow(s.split(","));
