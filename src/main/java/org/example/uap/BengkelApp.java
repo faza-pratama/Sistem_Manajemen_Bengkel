@@ -12,6 +12,8 @@ public class BengkelApp extends JFrame {
 
     private DefaultTableModel tableModelServis;
     private JTable tableServis;
+    private DefaultTableModel tableModelLaporan;
+    private JTable tableLaporan;
 
     public BengkelApp() {
         setTitle("Bengkel Pro Manager v1.0");
@@ -46,6 +48,12 @@ public class BengkelApp extends JFrame {
 
         contentPanel.add(createServisPage(), "PAGE_SERVIS");
         btnServis.addActionListener(e -> cardLayout.show(contentPanel, "PAGE_SERVIS"));
+
+        contentPanel.add(createLaporanPage(), "PAGE_LAPORAN");
+        btnLaporan.addActionListener(e -> {
+            loadDataLaporan(); // Update data setiap kali halaman dibuka
+            cardLayout.show(contentPanel, "PAGE_LAPORAN");
+        });
 
         // Event Navigasi
         btnHome.addActionListener(e -> cardLayout.show(contentPanel, "PAGE_DASHBOARD"));
@@ -171,6 +179,75 @@ public class BengkelApp extends JFrame {
 
         return panel;
     }
+    private JPanel createLaporanPage() {
+        JPanel panel = new JPanel(new BorderLayout(15, 15));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // HEADER & PENCARIAN
+        JPanel topPanel = new JPanel(new BorderLayout());
+        JLabel lblTitle = new JLabel("Riwayat Servis & Laporan");
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 20));
+
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JTextField txtSearch = new JTextField(15);
+        JButton btnSearch = new JButton("Cari Plat");
+        searchPanel.add(new JLabel("Cari Plat: "));
+        searchPanel.add(txtSearch);
+        searchPanel.add(btnSearch);
+
+        topPanel.add(lblTitle, BorderLayout.WEST);
+        topPanel.add(searchPanel, BorderLayout.EAST);
+        panel.add(topPanel, BorderLayout.NORTH);
+
+        // TABEL
+        String[] cols = {"Plat", "Keluhan", "Biaya", "Status"};
+        tableModelLaporan = new DefaultTableModel(cols, 0);
+        tableLaporan = new JTable(tableModelLaporan);
+        panel.add(new JScrollPane(tableLaporan), BorderLayout.CENTER);
+
+        // PANEL FOOTER (SORTING)
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton btnSortBiaya = new JButton("Urutkan Biaya (Termahal)");
+        JButton btnRefresh = new JButton("Muat Ulang Data");
+        bottomPanel.add(btnSortBiaya);
+        bottomPanel.add(btnRefresh);
+        panel.add(bottomPanel, BorderLayout.SOUTH);
+
+        // LOGIKA SORTING (Menggunakan Comparator & ArrayList)
+        btnSortBiaya.addActionListener(e -> {
+            java.util.List<Object[]> data = new java.util.ArrayList<>();
+            for (int i = 0; i < tableModelLaporan.getRowCount(); i++) {
+                data.add(new Object[]{
+                        tableModelLaporan.getValueAt(i, 0),
+                        tableModelLaporan.getValueAt(i, 1),
+                        tableModelLaporan.getValueAt(i, 2),
+                        tableModelLaporan.getValueAt(i, 3)
+                });
+            }
+            // Sorting Descending berdasarkan Biaya
+            data.sort((a, b) -> Double.compare(
+                    Double.parseDouble(b[2].toString()),
+                    Double.parseDouble(a[2].toString())
+            ));
+            tableModelLaporan.setRowCount(0);
+            for (Object[] row : data) tableModelLaporan.addRow(row);
+        });
+
+        // LOGIKA SEARCHING (Filter Sederhana)
+        btnSearch.addActionListener(e -> {
+            String query = txtSearch.getText().toLowerCase();
+            for (int i = 0; i < tableLaporan.getRowCount(); i++) {
+                if (tableLaporan.getValueAt(i, 0).toString().toLowerCase().contains(query)) {
+                    tableLaporan.setRowSelectionInterval(i, i);
+                    return;
+                }
+            }
+        });
+
+        btnRefresh.addActionListener(e -> loadDataLaporan());
+
+        return panel;
+    }
     private void simpanKeFile(String plat, String pemilik) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("kendaraan.txt", true))) {
             writer.write(plat + "," + pemilik);
@@ -194,6 +271,15 @@ public class BengkelApp extends JFrame {
         } catch (IOException e) {
             System.out.println("Gagal memuat data: " + e.getMessage());
         }
+    }
+    private void loadDataLaporan() {
+        tableModelLaporan.setRowCount(0);
+        try (BufferedReader reader = new BufferedReader(new FileReader("servis.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                tableModelLaporan.addRow(line.split(","));
+            }
+        } catch (IOException e) { /* File mungkin belum ada */ }
     }
     private void simpanServisKeFile(String plat, String keluhan, String biaya, String status) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("servis.txt", true))) {
