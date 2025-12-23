@@ -39,6 +39,7 @@ public class BengkelApp extends JFrame {
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
         add(contentPanel, BorderLayout.CENTER);
+        contentPanel.add(createDashboardPage(), "PAGE_DASHBOARD");
 
         // Event Navigasi
         btnHome.addActionListener(e -> cardLayout.show(contentPanel, "PAGE_DASHBOARD"));
