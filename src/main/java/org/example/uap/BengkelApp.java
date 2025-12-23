@@ -11,39 +11,46 @@ public class BengkelApp extends JFrame {
     protected JPanel contentPanel;
     protected CardLayout cardLayout;
 
-    // Global Data
-    protected DefaultTableModel tableModel;
+    // Global Data Models
+    protected DefaultTableModel tableModelKendaraan;
     private DefaultTableModel tableModelServis;
-    private JTable tableServis;
     private DefaultTableModel tableModelLaporan;
     private JTable tableLaporan;
 
     public BengkelApp() {
         setTitle("Bengkel Pro Manager v1.0");
-        setSize(950, 650);
+        setSize(1000, 700);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
         // --- SIDEBAR MENU ---
-        JPanel sidebar = new JPanel(new GridLayout(6, 1, 10, 10));
-        sidebar.setPreferredSize(new Dimension(200, 0));
+        JPanel sidebar = new JPanel();
+        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
+        sidebar.setPreferredSize(new Dimension(220, 0));
         sidebar.setBackground(new Color(33, 37, 41));
-        sidebar.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
+        sidebar.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
 
-        JButton btnHome = new JButton("Dashboard");
-        JButton btnMobil = new JButton("Data Kendaraan");
-        JButton btnServis = new JButton("Manajemen Servis");
-        JButton btnLaporan = new JButton("Riwayat/Laporan");
+        JLabel lblMenu = new JLabel("MENU UTAMA");
+        lblMenu.setForeground(Color.WHITE);
+        lblMenu.setFont(new Font("SansSerif", Font.BOLD, 16));
+        lblMenu.setAlignmentX(Component.CENTER_ALIGNMENT);
+        sidebar.add(lblMenu);
+        sidebar.add(Box.createRigidArea(new Dimension(0, 30)));
 
-        // Styling Button Sederhana
-        styleButton(btnHome); styleButton(btnMobil); styleButton(btnServis); styleButton(btnLaporan);
+        JButton btnHome = createMenuButton("Dashboard");
+        JButton btnMobil = createMenuButton("Data Kendaraan");
+        JButton btnServis = createMenuButton("Manajemen Servis");
+        JButton btnLaporan = createMenuButton("Riwayat/Laporan");
 
-        sidebar.add(new JLabel("MENU UTAMA", SwingConstants.CENTER) {{ setForeground(Color.WHITE); setFont(new Font("SansSerif", Font.BOLD, 14)); }});
         sidebar.add(btnHome);
+        sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
         sidebar.add(btnMobil);
+        sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
         sidebar.add(btnServis);
+        sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
         sidebar.add(btnLaporan);
+
         add(sidebar, BorderLayout.WEST);
 
         // --- CONTENT AREA ---
@@ -51,130 +58,115 @@ public class BengkelApp extends JFrame {
         contentPanel = new JPanel(cardLayout);
         add(contentPanel, BorderLayout.CENTER);
 
-        // 1. Tambahkan Halaman Dashboard
+        // Inisialisasi Halaman
         contentPanel.add(createDashboardPage(), "PAGE_DASHBOARD");
-
-        // 2. Tambahkan Halaman Kendaraan (INI YANG SEBELUMNYA ERROR/HILANG)
         contentPanel.add(createKendaraanPage(), "PAGE_KENDARAAN");
-
-        // 3. Tambahkan Halaman Servis
         contentPanel.add(createServisPage(), "PAGE_SERVIS");
-
-        // 4. Tambahkan Halaman Laporan
         contentPanel.add(createLaporanPage(), "PAGE_LAPORAN");
 
         // --- EVENT NAVIGASI ---
         btnHome.addActionListener(e -> cardLayout.show(contentPanel, "PAGE_DASHBOARD"));
-
         btnMobil.addActionListener(e -> {
-            loadDataKendaraan(); // Refresh data saat menu diklik
+            loadDataKendaraan();
             cardLayout.show(contentPanel, "PAGE_KENDARAAN");
         });
-
         btnServis.addActionListener(e -> cardLayout.show(contentPanel, "PAGE_SERVIS"));
-
         btnLaporan.addActionListener(e -> {
             loadDataLaporan();
             cardLayout.show(contentPanel, "PAGE_LAPORAN");
         });
 
-        // Load data awal jika ada
         loadDataKendaraan();
     }
 
-    // Method Helper untuk Styling
-    private void styleButton(JButton btn) {
+    private JButton createMenuButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        btn.setAlignmentX(Component.CENTER_ALIGNMENT);
         btn.setFocusPainted(false);
+        btn.setContentAreaFilled(true);
+        btn.setOpaque(true);
         btn.setBackground(Color.WHITE);
-        btn.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
     }
 
     // --- HALAMAN 1: DASHBOARD ---
     private JPanel createDashboardPage() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
+        panel.setBackground(new Color(245, 245, 245));
 
-        JLabel header = new JLabel("Selamat Datang, Admin Bengkel!");
-        header.setFont(new Font("SansSerif", Font.BOLD, 24));
-        header.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        JLabel header = new JLabel("Bengkel Dashboard");
+        header.setFont(new Font("SansSerif", Font.BOLD, 26));
+        header.setBorder(BorderFactory.createEmptyBorder(30, 30, 20, 30));
         panel.add(header, BorderLayout.NORTH);
 
         JPanel statsPanel = new JPanel(new GridLayout(1, 3, 20, 0));
-        statsPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
-        statsPanel.setBackground(Color.WHITE);
+        statsPanel.setBackground(new Color(245, 245, 245));
+        statsPanel.setBorder(BorderFactory.createEmptyBorder(0, 30, 30, 30));
 
-        // Placeholder stats (bisa diupdate real-time dengan logic tambahan)
-        statsPanel.add(createStatCard("Total Kendaraan", "Check Data", new Color(52, 152, 219)));
-        statsPanel.add(createStatCard("Servis Aktif", "On Progress", new Color(231, 76, 60)));
-        statsPanel.add(createStatCard("Status Sistem", "Online", new Color(46, 204, 113)));
+        statsPanel.add(createStatCard("Total Kendaraan", "Update on Refresh", new Color(41, 128, 185)));
+        statsPanel.add(createStatCard("Status Mekanik", "Tersedia", new Color(192, 57, 43)));
+        statsPanel.add(createStatCard("Sistem Database", "Terhubung", new Color(39, 174, 96)));
 
-        panel.add(statsPanel, BorderLayout.CENTER);
+        panel.add(statsPanel, BorderLayout.NORTH);
         return panel;
     }
 
     private JPanel createStatCard(String title, String value, Color color) {
-        JPanel card = new JPanel(new GridLayout(2, 1));
+        JPanel card = new JPanel(new GridLayout(2, 1, 5, 5));
         card.setBackground(color);
-        card.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-        JLabel lblT = new JLabel(title, SwingConstants.CENTER); lblT.setForeground(Color.WHITE);
-        JLabel lblV = new JLabel(value, SwingConstants.CENTER); lblV.setFont(new Font("SansSerif", Font.BOLD, 20)); lblV.setForeground(Color.WHITE);
+        card.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        JLabel lblT = new JLabel(title); lblT.setForeground(Color.WHITE);
+        JLabel lblV = new JLabel(value); lblV.setForeground(Color.WHITE);
+        lblV.setFont(new Font("SansSerif", Font.BOLD, 18));
         card.add(lblT); card.add(lblV);
         return card;
     }
 
-    // --- HALAMAN 2: DATA KENDARAAN (Perbaikan Utama) ---
+    // --- HALAMAN 2: DATA KENDARAAN ---
     private JPanel createKendaraanPage() {
-        JPanel panel = new JPanel(new BorderLayout(15, 15));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        panel.setBackground(new Color(245, 245, 245));
+        JPanel panel = new JPanel(new BorderLayout(20, 20));
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
         JLabel lblTitle = new JLabel("Master Data Kendaraan");
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 20));
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 22));
         panel.add(lblTitle, BorderLayout.NORTH);
 
-        // Input Form
-        JPanel formPanel = new JPanel(new GridLayout(6, 1, 5, 5));
-        formPanel.setPreferredSize(new Dimension(250, 0));
+        JPanel formPanel = new JPanel(new GridLayout(0, 1, 10, 10));
+        formPanel.setPreferredSize(new Dimension(280, 0));
 
         JTextField txtPlat = new JTextField();
         JTextField txtPemilik = new JTextField();
-        JButton btnTambah = new JButton("Simpan Data Kendaraan");
-        btnTambah.setBackground(new Color(46, 204, 113));
+        JButton btnTambah = new JButton("Simpan Kendaraan");
+        btnTambah.setBackground(new Color(40, 167, 69));
         btnTambah.setForeground(Color.WHITE);
+        btnTambah.setOpaque(true);
+        btnTambah.setBorderPainted(false);
 
         formPanel.add(new JLabel("Plat Nomor:"));
         formPanel.add(txtPlat);
         formPanel.add(new JLabel("Nama Pemilik:"));
         formPanel.add(txtPemilik);
-        formPanel.add(new JLabel("")); // Spacer
+        formPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         formPanel.add(btnTambah);
         panel.add(formPanel, BorderLayout.WEST);
 
-        // Tabel Data Kendaraan
         String[] cols = {"Plat Nomor", "Nama Pemilik"};
-        tableModel = new DefaultTableModel(cols, 0);
-        JTable tableKendaraan = new JTable(tableModel);
-        panel.add(new JScrollPane(tableKendaraan), BorderLayout.CENTER);
+        tableModelKendaraan = new DefaultTableModel(cols, 0);
+        JTable table = new JTable(tableModelKendaraan);
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
 
-        // Logic Tombol Tambah (Dipindahkan dari Constructor)
         btnTambah.addActionListener(e -> {
             String plat = txtPlat.getText().trim();
             String pemilik = txtPemilik.getText().trim();
-
             if (plat.isEmpty() || pemilik.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Input tidak boleh kosong!", "Peringatan", JOptionPane.WARNING_MESSAGE);
-                return;
+                JOptionPane.showMessageDialog(this, "Data tidak lengkap!"); return;
             }
-
-            // Tambah ke Tabel
-            tableModel.addRow(new Object[]{plat, pemilik});
-            // Simpan ke File
-            simpanKeFile(plat, pemilik);
-
-            // Reset
-            txtPlat.setText("");
-            txtPemilik.setText("");
-            JOptionPane.showMessageDialog(this, "Data Kendaraan Berhasil Disimpan!");
+            tableModelKendaraan.addRow(new Object[]{plat, pemilik});
+            simpanKeFile("kendaraan.txt", plat + "," + pemilik);
+            txtPlat.setText(""); txtPemilik.setText("");
+            JOptionPane.showMessageDialog(this, "Berhasil Disimpan!");
         });
 
         return panel;
@@ -182,59 +174,46 @@ public class BengkelApp extends JFrame {
 
     // --- HALAMAN 3: MANAJEMEN SERVIS ---
     private JPanel createServisPage() {
-        JPanel panel = new JPanel(new BorderLayout(15, 15));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        JPanel panel = new JPanel(new BorderLayout(20, 20));
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-        JLabel lblTitle = new JLabel("Form Manajemen Servis");
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 20));
+        JLabel lblTitle = new JLabel("Form Pendaftaran Servis");
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 22));
         panel.add(lblTitle, BorderLayout.NORTH);
 
-        JPanel formPanel = new JPanel(new GridLayout(10, 1, 5, 5));
-        formPanel.setPreferredSize(new Dimension(250, 0));
+        JPanel formPanel = new JPanel(new GridLayout(0, 1, 8, 8));
+        formPanel.setPreferredSize(new Dimension(280, 0));
 
-        JTextField txtPlatServis = new JTextField();
+        JTextField txtPlat = new JTextField();
         JTextField txtKeluhan = new JTextField();
         JTextField txtBiaya = new JTextField();
-        String[] statusOptions = {"Antri", "Proses", "Selesai"};
-        JComboBox<String> cbStatus = new JComboBox<>(statusOptions);
+        JComboBox<String> cbStatus = new JComboBox<>(new String[]{"Antri", "Proses", "Selesai"});
+        JButton btnSimpan = new JButton("Catat Servis");
+        btnSimpan.setBackground(new Color(0, 123, 255));
+        btnSimpan.setForeground(Color.WHITE);
+        btnSimpan.setOpaque(true);
+        btnSimpan.setBorderPainted(false);
 
-        formPanel.add(new JLabel("Plat Nomor Kendaraan:")); formPanel.add(txtPlatServis);
+        formPanel.add(new JLabel("Plat Nomor:")); formPanel.add(txtPlat);
         formPanel.add(new JLabel("Keluhan:")); formPanel.add(txtKeluhan);
-        formPanel.add(new JLabel("Biaya Servis (Rp):")); formPanel.add(txtBiaya);
+        formPanel.add(new JLabel("Biaya (Angka):")); formPanel.add(txtBiaya);
         formPanel.add(new JLabel("Status:")); formPanel.add(cbStatus);
-
-        JButton btnSimpanServis = new JButton("Simpan Transaksi");
-        btnSimpanServis.setBackground(new Color(52, 152, 219));
-        btnSimpanServis.setForeground(Color.WHITE);
-        formPanel.add(new JLabel("")); formPanel.add(btnSimpanServis);
+        formPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        formPanel.add(btnSimpan);
         panel.add(formPanel, BorderLayout.WEST);
 
-        // Tabel Servis (Sementara/Session)
-        String[] cols = {"Plat", "Keluhan", "Biaya", "Status"};
-        tableModelServis = new DefaultTableModel(cols, 0);
-        tableServis = new JTable(tableModelServis);
-        panel.add(new JScrollPane(tableServis), BorderLayout.CENTER);
+        tableModelServis = new DefaultTableModel(new String[]{"Plat", "Keluhan", "Biaya", "Status"}, 0);
+        panel.add(new JScrollPane(new JTable(tableModelServis)), BorderLayout.CENTER);
 
-        btnSimpanServis.addActionListener(e -> {
+        btnSimpan.addActionListener(e -> {
             try {
-                String plat = txtPlatServis.getText().trim();
-                String keluhan = txtKeluhan.getText().trim();
-                String status = cbStatus.getSelectedItem().toString();
-                double biaya = Double.parseDouble(txtBiaya.getText().trim());
-
-                if (plat.isEmpty() || keluhan.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Mohon lengkapi data!");
-                    return;
-                }
-
-                tableModelServis.addRow(new Object[]{plat, keluhan, String.valueOf(biaya), status});
-                simpanServisKeFile(plat, keluhan, String.valueOf(biaya), status);
-
-                txtPlatServis.setText(""); txtKeluhan.setText(""); txtBiaya.setText("");
-                JOptionPane.showMessageDialog(this, "Data Servis Berhasil Dicatat!");
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Biaya harus berupa angka!", "Error Input", JOptionPane.ERROR_MESSAGE);
-            }
+                double biaya = Double.parseDouble(txtBiaya.getText());
+                String data = txtPlat.getText() + "," + txtKeluhan.getText() + "," + biaya + "," + cbStatus.getSelectedItem();
+                tableModelServis.addRow(data.split(","));
+                simpanKeFile("servis.txt", data);
+                JOptionPane.showMessageDialog(this, "Servis Dicatat!");
+                txtBiaya.setText(""); txtKeluhan.setText("");
+            } catch (Exception ex) { JOptionPane.showMessageDialog(this, "Biaya harus angka!"); }
         });
 
         return panel;
@@ -242,134 +221,70 @@ public class BengkelApp extends JFrame {
 
     // --- HALAMAN 4: LAPORAN ---
     private JPanel createLaporanPage() {
-        JPanel panel = new JPanel(new BorderLayout(15, 15));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        JPanel panel = new JPanel(new BorderLayout(20, 20));
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-        JPanel topPanel = new JPanel(new BorderLayout());
-        JLabel lblTitle = new JLabel("Riwayat Servis & Laporan");
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 20));
+        JPanel top = new JPanel(new BorderLayout());
+        JLabel lblTitle = new JLabel("Laporan & Riwayat");
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 22));
+        top.add(lblTitle, BorderLayout.WEST);
 
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JTextField txtSearch = new JTextField(15);
         JButton btnSearch = new JButton("Cari Plat");
-        searchPanel.add(new JLabel("Cari Plat: ")); searchPanel.add(txtSearch); searchPanel.add(btnSearch);
+        JPanel searchP = new JPanel(); searchP.add(txtSearch); searchP.add(btnSearch);
+        top.add(searchP, BorderLayout.EAST);
+        panel.add(top, BorderLayout.NORTH);
 
-        topPanel.add(lblTitle, BorderLayout.WEST);
-        topPanel.add(searchPanel, BorderLayout.EAST);
-        panel.add(topPanel, BorderLayout.NORTH);
-
-        String[] cols = {"Plat", "Keluhan", "Biaya", "Status"};
-        tableModelLaporan = new DefaultTableModel(cols, 0);
+        tableModelLaporan = new DefaultTableModel(new String[]{"Plat", "Keluhan", "Biaya", "Status"}, 0);
         tableLaporan = new JTable(tableModelLaporan);
         panel.add(new JScrollPane(tableLaporan), BorderLayout.CENTER);
 
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton btnSortBiaya = new JButton("Urutkan Biaya (Termahal)");
-        JButton btnRefresh = new JButton("Muat Ulang Data");
-        bottomPanel.add(btnSortBiaya); bottomPanel.add(btnRefresh);
-        panel.add(bottomPanel, BorderLayout.SOUTH);
+        JButton btnSort = new JButton("Urutkan Biaya Termahal");
+        btnSort.setBackground(new Color(108, 117, 125));
+        btnSort.setForeground(Color.WHITE);
+        btnSort.setOpaque(true);
+        btnSort.setBorderPainted(false);
+        panel.add(btnSort, BorderLayout.SOUTH);
 
-        // Sorting Logic
-        btnSortBiaya.addActionListener(e -> {
-            List<Object[]> data = new ArrayList<>();
-            for (int i = 0; i < tableModelLaporan.getRowCount(); i++) {
-                data.add(new Object[]{
-                        tableModelLaporan.getValueAt(i, 0),
-                        tableModelLaporan.getValueAt(i, 1),
-                        tableModelLaporan.getValueAt(i, 2),
-                        tableModelLaporan.getValueAt(i, 3)
-                });
+        btnSort.addActionListener(e -> {
+            List<Object[]> rows = new ArrayList<>();
+            for(int i=0; i<tableModelLaporan.getRowCount(); i++) {
+                Object[] r = new Object[4];
+                for(int j=0; j<4; j++) r[j] = tableModelLaporan.getValueAt(i, j);
+                rows.add(r);
             }
-            data.sort((a, b) -> Double.compare(
-                    Double.parseDouble(b[2].toString()),
-                    Double.parseDouble(a[2].toString())
-            ));
+            rows.sort((a,b) -> Double.compare(Double.parseDouble(b[2].toString()), Double.parseDouble(a[2].toString())));
             tableModelLaporan.setRowCount(0);
-            for (Object[] row : data) tableModelLaporan.addRow(row);
+            for(Object[] r : rows) tableModelLaporan.addRow(r);
         });
-
-        // Search Logic
-        btnSearch.addActionListener(e -> {
-            String query = txtSearch.getText().toLowerCase();
-            tableLaporan.clearSelection();
-            for (int i = 0; i < tableLaporan.getRowCount(); i++) {
-                if (tableLaporan.getValueAt(i, 0).toString().toLowerCase().contains(query)) {
-                    tableLaporan.setRowSelectionInterval(i, i);
-                    // Scroll ke baris yang ditemukan
-                    tableLaporan.scrollRectToVisible(tableLaporan.getCellRect(i, 0, true));
-                    return;
-                }
-            }
-            JOptionPane.showMessageDialog(this, "Data tidak ditemukan");
-        });
-
-        btnRefresh.addActionListener(e -> loadDataLaporan());
 
         return panel;
     }
 
-    // --- FILE HANDLING ---
-    private void simpanKeFile(String plat, String pemilik) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("kendaraan.txt", true))) {
-            writer.write(plat + "," + pemilik);
-            writer.newLine();
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Gagal menyimpan: " + e.getMessage());
-        }
+    // --- CORE LOGIC ---
+    private void simpanKeFile(String filename, String line) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(filename, true))) {
+            bw.write(line); bw.newLine();
+        } catch (IOException e) { e.printStackTrace(); }
     }
 
     private void loadDataKendaraan() {
-        if (tableModel == null) return; // Guard clause
-
-        tableModel.setRowCount(0); // Reset tabel agar tidak duplikat saat reload
-        File file = new File("kendaraan.txt");
-        if (!file.exists()) return;
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] data = line.split(",");
-                if (data.length == 2) {
-                    tableModel.addRow(data);
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Gagal memuat data: " + e.getMessage());
-        }
-    }
-
-    private void simpanServisKeFile(String plat, String keluhan, String biaya, String status) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("servis.txt", true))) {
-            writer.write(plat + "," + keluhan + "," + biaya + "," + status);
-            writer.newLine();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        if (tableModelKendaraan == null) return;
+        tableModelKendaraan.setRowCount(0);
+        try (BufferedReader br = new BufferedReader(new FileReader("kendaraan.txt"))) {
+            String s; while((s = br.readLine()) != null) tableModelKendaraan.addRow(s.split(","));
+        } catch (Exception e) {}
     }
 
     private void loadDataLaporan() {
         tableModelLaporan.setRowCount(0);
-        File file = new File("servis.txt");
-        if (!file.exists()) return;
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] data = line.split(",");
-                if (data.length >= 4) {
-                    tableModelLaporan.addRow(data);
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        try (BufferedReader br = new BufferedReader(new FileReader("servis.txt"))) {
+            String s; while((s = br.readLine()) != null) tableModelLaporan.addRow(s.split(","));
+        } catch (Exception e) {}
     }
 
     public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {}
-
+        try { UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName()); } catch (Exception e) {}
         SwingUtilities.invokeLater(() -> new BengkelApp().setVisible(true));
     }
 }

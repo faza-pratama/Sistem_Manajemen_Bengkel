@@ -1,1 +1,2 @@
 1234,bocor,50000.0,Proses
+p 1234 ly,mogok,2000000.0,Antri
