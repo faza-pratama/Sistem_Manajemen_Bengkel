@@ -40,6 +40,7 @@ public class BengkelApp extends JFrame {
         contentPanel = new JPanel(cardLayout);
         add(contentPanel, BorderLayout.CENTER);
         contentPanel.add(createDashboardPage(), "PAGE_DASHBOARD");
+        contentPanel.add(createKendaraanPage(), "PAGE_KENDARAAN");
 
         // Event Navigasi
         btnHome.addActionListener(e -> cardLayout.show(contentPanel, "PAGE_DASHBOARD"));
@@ -74,6 +75,41 @@ public class BengkelApp extends JFrame {
         JLabel lblV = new JLabel(value, SwingConstants.CENTER); lblV.setFont(new Font("SansSerif", Font.BOLD, 25)); lblV.setForeground(Color.WHITE);
         card.add(lblT); card.add(lblV);
         return card;
+    }
+
+    private JPanel createKendaraanPage() {
+        JPanel panel = new JPanel(new BorderLayout(15, 15));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBackground(Color.WHITE);
+
+        JLabel lblTitle = new JLabel("Manajemen Data Kendaraan");
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 20));
+        panel.add(lblTitle, BorderLayout.NORTH);
+
+        // FORM INPUT
+        JPanel formPanel = new JPanel(new GridLayout(10, 1, 5, 5));
+        formPanel.setPreferredSize(new Dimension(250, 0));
+        formPanel.setBackground(Color.WHITE);
+
+        JTextField txtPlat = new JTextField();
+        JTextField txtPemilik = new JTextField();
+        JButton btnTambah = new JButton("Simpan Kendaraan");
+
+        formPanel.add(new JLabel("Plat Nomor:"));
+        formPanel.add(txtPlat);
+        formPanel.add(new JLabel("Nama Pemilik:"));
+        formPanel.add(txtPemilik);
+        formPanel.add(new JLabel("")); // Spacer
+        formPanel.add(btnTambah);
+        panel.add(formPanel, BorderLayout.WEST);
+
+        // TABEL DATA
+        String[] columns = {"Plat Nomor", "Nama Pemilik"};
+        tableModel = new DefaultTableModel(columns, 0);
+        JTable table = new JTable(tableModel);
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+
+        return panel;
     }
 
     public static void main(String[] args) {
