@@ -45,6 +45,36 @@ public class BengkelApp extends JFrame {
         btnMobil.addActionListener(e -> cardLayout.show(contentPanel, "PAGE_KENDARAAN"));
     }
 
+    private JPanel createDashboardPage() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.WHITE);
+
+        JLabel header = new JLabel("Selamat Datang, Admin Bengkel!");
+        header.setFont(new Font("SansSerif", Font.BOLD, 22));
+        header.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.add(header, BorderLayout.NORTH);
+
+        JPanel statsPanel = new JPanel(new GridLayout(1, 3, 20, 0));
+        statsPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
+        statsPanel.setBackground(Color.WHITE);
+
+        statsPanel.add(createStatCard("Total Kendaraan", "0", new Color(52, 152, 219)));
+        statsPanel.add(createStatCard("Servis Aktif", "0", new Color(231, 76, 60)));
+        statsPanel.add(createStatCard("Pendapatan", "Rp 0", new Color(46, 204, 113)));
+
+        panel.add(statsPanel, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel createStatCard(String title, String value, Color color) {
+        JPanel card = new JPanel(new GridLayout(2, 1));
+        card.setBackground(color);
+        JLabel lblT = new JLabel(title, SwingConstants.CENTER); lblT.setForeground(Color.WHITE);
+        JLabel lblV = new JLabel(value, SwingConstants.CENTER); lblV.setFont(new Font("SansSerif", Font.BOLD, 25)); lblV.setForeground(Color.WHITE);
+        card.add(lblT); card.add(lblV);
+        return card;
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new BengkelApp().setVisible(true));
     }
