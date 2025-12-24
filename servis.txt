@@ -1,0 +1,3 @@
+KT 5678 LT,Mogok,200000.0,Antri
+P 1234 LY,Karbu,50000.0,Proses
+AG 8765 PT,Bore up,1500000.0,Selesai
