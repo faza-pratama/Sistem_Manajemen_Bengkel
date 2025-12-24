@@ -135,7 +135,7 @@ public class BengkelApp extends JFrame {
         JPanel panel = new JPanel(new BorderLayout(20, 20));
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-        JLabel lblTitle = new JLabel("Master Data Kendaraan");
+        JLabel lblTitle = new JLabel("Data Kendaraan");
         lblTitle.setFont(new Font("SansSerif", Font.BOLD, 22));
         panel.add(lblTitle, BorderLayout.NORTH);
 
